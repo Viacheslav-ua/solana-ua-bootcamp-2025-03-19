@@ -1,4 +1,6 @@
 use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::pubkey::Pubkey;
+use solana_client::rpc_client::RpcClient;
 use dotenv::dotenv;
 use dotenv::from_filename;
 use std::env;
@@ -15,6 +17,7 @@ fn main() {
         println!("Enter a command:");
         println!("\x1b[32m1\x1b[0m Generate and save keys");
         println!("\x1b[32m2\x1b[0m Read keys");
+        println!("\x1b[32m3\x1b[0m Check balance");
         println!("\x1b[32m0\x1b[0m Exit");
 
         match io::stdin().read_line(&mut action) {
@@ -29,8 +32,9 @@ fn main() {
         match &command {
             1 => { generate_keys(); },
             2 => { read_keys(); },
+            3 => { check_balance(); },
             0 => { break; },
-            _ => println!("\x1b[31mInvalid command\x1b[0m\nUse only \x1b[32m0\x1b[0m, \x1b[32m1\x1b[0m or \x1b[32m2\x1b[0m"),
+            _ => println!("\x1b[31mInvalid command\x1b[0m\nUse only \x1b[32m0\x1b[0m, \x1b[32m1\x1b[0m or \x1b[32m2\x1b[0m or \x1b[32m3\x1b[0m commands"),
         }
     }
     
@@ -121,6 +125,27 @@ fn read_keys() {
     println!("✅ \x1b[95mPublic key:\x1b[0m \x1b[4;34m{}\x1b[0m", keypair.pubkey());
 }
 
+fn check_balance() {
+    let rpc_url: String = "https://api.devnet.solana.com".to_string();
+    let client: RpcClient = RpcClient::new(rpc_url);
+    let wallet_address: String = match env::var("PUBLIC_KEY_SLV") {
+        Ok(key) => key,
+        Err(_) => {
+            eprintln!("❌ Error: \x1b[91mPRIVATE_KEY value not found in the env\x1b[0m");
+            return;
+        }
+    };
+    let public_key: Pubkey = Pubkey::from_str_const(&wallet_address);
+
+    match client.get_balance(&public_key) {
+        Ok(lamports) => {
+            let sol: f64 = lamports as f64 / 1_000_000_000.0;
+            println!("✅ \x1b[95mAccount:\x1b[0m \x1b[4;34m{}\x1b[0m", public_key);
+            println!("Balance: {} SOL ({} lamports)", sol, lamports);
+        }
+        Err(err) => println!("Error: {:?}", err),
+    }
+}
 
 fn reload_env() {
     env::vars().for_each(|(key, _)| unsafe { env::remove_var(key) });
