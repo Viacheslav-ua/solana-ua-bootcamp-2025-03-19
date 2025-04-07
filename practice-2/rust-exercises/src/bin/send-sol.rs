@@ -47,18 +47,14 @@ fn main() {
         }
     };
     let recipient_pk: Pubkey = Pubkey::from_str_const(&recipient_pk_str);
-
-    // let rpc_url: String = "https://api.devnet.solana.com".to_string();
-    // let client: RpcClient = RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
-    
-
-    let lamports: u64 = 20_000_000;
+    let lamports: u64 = 500_000_000;
 
     println!("\x1b[32m----------------------------\x1b[0m");
     println!("Sending {} lamports", lamports);
     println!("🔑 from: \x1b[95m{}\x1b[0m", sender_kp.pubkey());
     println!("🔑 into: \x1b[95m{}\x1b[0m", recipient_pk_str);
-    // println!("Sending {} lamports\n 🔑 from: \x1b[95m{}\x1b[0m{}\n 🔑 to: \x1b[95m{}\x1b[0m{}", lamports, sender_kp.pubkey(), recipient_pk_str
-    // );
     println!("\x1b[33m----------------------------\x1b[0m");
+
+    let rpc_url: String = "https://api.devnet.solana.com".to_string();
+    let client: RpcClient = RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
 }
