@@ -46,11 +46,11 @@ fn generate_keys() {
     let mut keypair: Keypair = Keypair::new();
 
     println!("\x1b[32m----------------------------\x1b[0m");
-    println!("Enter the desired prefix (3 characters max) or press enter to generate keys without a prefix:");
+    println!("Enter the desired prefix (4 characters max) or press enter to generate keys without a prefix:");
     match io::stdin().read_line(&mut prefix) {
         Ok(_pre) => {
-            if _pre > 4 {
-                println!("❌ Error: \x1b[91mPrefix is too long (allowed 3 characters max)\x1b[0m");
+            if _pre > 5 {
+                println!("❌ Error: \x1b[91mPrefix is too long (allowed 4 characters max)\x1b[0m");
                 return;
             } else if _pre > 1 {
                 let mut attempts = 0;
