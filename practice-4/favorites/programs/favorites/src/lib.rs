@@ -11,10 +11,10 @@ pub struct Favorites {
 
     #[max_len(50)]
     pub color: String,
+
+    pub delegate: Option<Pubkey>,
 }
 
-// When people call the set_favorites instruction, they will need to provide the accounts that will
-// be modified. This keeps Solana fast!
 #[derive(Accounts)]
 pub struct SetFavorites<'info> {
     #[account(mut)]
@@ -32,10 +32,16 @@ pub struct SetFavorites<'info> {
     pub system_program: Program<'info, System>,
 }
 
+
+
 #[derive(Accounts)]
 pub struct UpdateFavorites<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
+
+    /// CHECK: This signer is a delegate. Manual validation is done in handler.
+    #[account(signer)]
+    pub signer: AccountInfo<'info>,
 
     #[account(
         mut,
@@ -66,7 +72,7 @@ pub mod favorites {
         context
             .accounts
             .favorites
-            .set_inner(Favorites { number, color });
+            .set_inner(Favorites { number, color, delegate: None });
         Ok(())
     }
 
@@ -75,21 +81,46 @@ pub mod favorites {
         number: u64,
         color: String,
     ) -> Result<()> {
-        let user_public_key = context.accounts.user.key();
-        msg!("Greetings from {}", context.program_id);
-        msg!(
-            "User {}'s favorite number is {} and favorite color is: {}",
-            user_public_key,
-            number,
-            color
-        );
+        let current_delegate: Option<Pubkey> = context.accounts.favorites.delegate;
+        let signer = context.accounts.user.key;
+        
+        let is_owner = true;
+        let is_delegate = current_delegate == Some(*signer);
+
+        require!(is_owner || is_delegate, CustomError::Unauthorized);
 
         context
             .accounts
             .favorites
-            .set_inner(Favorites { number, color });
+            .set_inner(Favorites { number, color, delegate: current_delegate });
         Ok(())
     }
+
+    pub fn set_authority(
+        context: Context<UpdateFavorites>,
+        delegate: Option<Pubkey>,
+    ) -> Result<()> {
+        let favorites = &mut context.accounts.favorites;
+            
+        match delegate {
+            Some(delegate) => {
+                favorites.delegate = Some(delegate);
+                msg!("✅Delegate set: {}", delegate);
+                Ok(())
+                }
+            None => {
+                favorites.delegate = None;
+                msg!("✅ Delegate removed.");
+                Ok(())
+            }
+        }
+    }
+}
+
+#[error_code]
+pub enum CustomError {
+    #[msg("Only the authority or delegate can update this account.")]
+    Unauthorized,
 }
 
 
